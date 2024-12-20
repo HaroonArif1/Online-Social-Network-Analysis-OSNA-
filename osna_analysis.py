@@ -1,135 +1,99 @@
 # -*- coding: utf-8 -*-
+"""
+Twitter Social Network Analysis
+This script analyzes a Twitter user's social network by visualizing and computing various graph metrics.
+"""
 
 import networkx as nx
 import matplotlib.pyplot as plt
 from networkx.algorithms import approximation as ap
 
-
-listeOfName=[]
+# Initialize an empty list to store names of followers
+listeOfName = []
 
 ############################################################################################################
-####################################  Extraction of the data : #################################################################
+# Data Extraction: Extract names of users from two text files
 ############################################################################################################
-""" 
-In this part, we collect the data from the social network.
-The data are download in two files (the first 100 users have a different file
-because at the begining we download it ina json file, and we have converted it 
-after) 
+"""
+In this section, we collect the data from the social network.
+The data is stored in two text files: 
+- The first file contains 100 users, initially in JSON format, which was later converted.
+- The second file contains the remaining users.
 """
 
+# Process twitter_user_data1.txt
+with open("twitter_user_data1.txt", "r") as file1:
+    for line in file1:
+        parts = line.split("{")
+        for part in parts:
+            subparts = part.split('"')  # Extract names of users
+            if len(subparts) > 7:
+                listeOfName.append(subparts[7])  # Append names to the list
 
-M=open("twitter_user_data1.txt","r")
-for x in M:
-    A=x.split("{")
-    for B in range(len(A)):
-        C=A[B].split('"')      #In these two loops, we only want to take the names of the users
-        if len(C)>7:
-            listeOfName.append(C[7])   #we put the names in the list listeOfName[]
-M.close()
+# Process twitter_user_data2.txt
+with open("twitter_user_data2.txt", "r") as file2:
+    for line in file2:
+        line = line.strip()
+        parts = line.split('"')
+        if len(parts) > 4 and parts[1] == "name":
+            listeOfName.append(parts[3])
 
-M2=open("twitter_user_data2.txt","r")
-for x in M2:
-    x.strip()
-    A=x.split('"')
-    if len(A)>4 and A[1]=="name":
-        listeOfName.append(A[3])
-M2.close()
-
-number=len(listeOfName)     # this is the number of followers in our graph
- 
-
+# Count the total number of followers
+number = len(listeOfName)
 
 ############################################################################################################
-################# Creation of the graph :  ######################################################################## 
+# Graph Creation: Construct a graph representing the social network
 ############################################################################################################
 
-fig, ax = plt.subplots(figsize=(50,50))
-G = nx.Graph()
+# Initialize a matplotlib figure
+fig, ax = plt.subplots(figsize=(50, 50))
+G = nx.Graph()  # Create an empty graph
 
+# Define a color palette for nodes
+colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
+          'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
+color_map = []  # List of colors to make the graph visually appealing
 
-######################### Nodes :  ############################################
+# Add nodes (300 followers and the main user)
+for i in range(number + 1):
+    G.add_node(i)
+    color_map.append(colors[i % len(colors)])
 
-couleur=['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown','tab:pink','tab:gray','tab:olive','tab:cyan']
-color_map = []          # this list of colors is only usefull to make the graph looks cool
+# Add edges: The main user (node 0) connects to all followers
+for i in range(1, number + 1):
+    G.add_edges_from([(0, i)])
 
-for x in range(number+1):       #creation of the 300 followers/nodes
-    G.add_node(x)
-    color_map.append(couleur[x%len(couleur)])
-    
-    
-######################### Edges :  ############################################
+# Add labels for nodes
+labels = {0: "Ivanka Trump"}  # Main user
+for i in range(number):
+    labels[i + 1] = listeOfName[i]  # Followers
 
-# in this graph, the only edges are between the main character (node number 0) and each followers
-for x in range(1,number+1):         
-    G.add_edges_from([(0, x)])
+# Define node sizes (main user is larger)
+sizes = [50000]  # Main user's size
+[sizes.append(3000) for _ in range(number)]  # Follower node sizes
 
-
-######################### Labels :  ############################################
-
-lab = {}
-lab[0]="Ivanka Trump"       # the main user is Ivanka Trump
-for x in range(number):
-    lab[x+1]=listeOfName[x]    
-
-
-######################### Size :  ############################################
-
-size=[50000]                                    # we make the main node bigger than the others
-[size.append(3000) for k in range(number)]
-
-
-######################### Graph :  ############################################
-
+# Draw the graph
 nx.spring_layout(G)
-nx.draw_networkx(G, node_color=color_map, labels=lab, with_labels = True, node_size=[v for v in size])
-    
-#print(G.size())
-
-
+nx.draw_networkx(G, node_color=color_map, labels=labels, with_labels=True, node_size=sizes)
 
 ############################################################################################################
-#################################### Calculation :  ########################################################################
+# Graph Analysis: Compute various metrics
 ############################################################################################################
 
-#Degree Distribution 
-degree_sequence = sorted([d for n, d in G.degree()], reverse=True)
-dmax = max(degree_sequence)
-fig = plt.figure("Degree of the graph", figsize=(8, 8))
-axgrid = fig.add_gridspec(5, 4)
-
-ax1 = fig.add_subplot(axgrid[3:, :2])
-ax1.plot(degree_sequence, "b", marker="o")
-ax1.set_title("Degree Distribution")
-ax1.set_ylabel("frequency")
-ax1.set_xlabel("in-degree")
-
-fig.tight_layout()
+# Degree Distribution
+degree_sequence = sorted([d for _, d in G.degree()], reverse=True)
+fig = plt.figure("Degree Distribution", figsize=(8, 8))
+plt.plot(degree_sequence, "b", marker="o")
+plt.title("Degree Distribution")
+plt.ylabel("Frequency")
+plt.xlabel("In-Degree")
 plt.show()
 
-
-#Clustering Coefficient, 
-#print(nx.triangles(G))
-print("Clustering Coefficient :",nx.average_clustering(G))
-
-#Pagerank, 
-print("Pagerank :",nx.pagerank(G,alpha=0.9))
-
-#Diameter, 
-print("Diameter :",nx.diameter(G))
-
-#Closeness, 
-print("Closeness Centrality :",nx.closeness_centrality(G))
-
-#Betweeness
-print("Betweeness Centrality :",nx.betweenness_centrality(G))
-
-#density,
-print("Density :", nx.density(G))
-
-#Metric closure :
-print("Metric closure :", ap.metric_closure(G))
-
-#Ramsay numbers :
-#print("Ramsay numbers :", ap.ramsey_R2(G))
-
-
+# Compute various graph metrics
+print("Clustering Coefficient:", nx.average_clustering(G))
+print("Pagerank:", nx.pagerank(G, alpha=0.9))
+print("Diameter:", nx.diameter(G))
+print("Closeness Centrality:", nx.closeness_centrality(G))
+print("Betweenness Centrality:", nx.betweenness_centrality(G))
+print("Density:", nx.density(G))
+print("Metric Closure:", ap.metric_closure(G))
