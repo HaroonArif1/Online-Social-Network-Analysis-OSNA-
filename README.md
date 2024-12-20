@@ -27,3 +27,10 @@ To analyze and visualize the structure, behavior, and influence within a social 
 - `Networkx`
 - `Data Analysis`
 - `Social Network Analysis (SNA)`
+
+## Data Files
+This project uses two text files, `twitter_user_data1.txt` and `twitter_user_data2.txt`, which contain Twitter user data collected through the Twitter API. These files are used for analyzing and visualizing the social network.
+
+### File Descriptions:
+- **`twitter_user_data1.txt`**: Contains a subset of Twitter user data, including user IDs, names, and usernames for initial analysis.
+- **`twitter_user_data2.txt`**: Contains additional Twitter user data for extended analysis and comparison.
